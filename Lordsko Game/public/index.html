@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lordsko Mini Game</title>
+    <link rel="stylesheet" href="/vendor_leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <div>
+          <h1 class="title">Lordsko Mini Game</h1>
+        </div>
+        <div class="controls">
+          <button class="button" id="refresh-btn">Refresh uploads</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section id="map" aria-label="NYC map with photo markers"></section>
+
+        <aside class="sidebar">
+          <div class="card" id="leaderboard-card">
+            <h3>Leaderboard</h3>
+            <div id="leaderboard-content" class="empty">No uploads yet.</div>
+          </div>
+
+      <div class="card" id="recent-card">
+        <h3>Recent uploads</h3>
+        <ul id="recent-list" class="recent-list"></ul>
+        <div id="recent-empty" class="empty">Waiting for the first drop.</div>
+      </div>
+
+      <div class="card">
+        <h3>Drop a photo</h3>
+        <form id="upload-form">
+          <div class="form-grid">
+            <label>
+              <span>Uploader</span>
+              <select name="uploader" required>
+                <option value="">Choose</option>
+                <option value="Ben">Ben</option>
+                <option value="Jake">Jake</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label>
+              <span>Street address (NYC assumed)</span>
+              <input name="address" type="text" required placeholder="123 Main St" />
+            </label>
+          </div>
+          <label class="file-label">
+            <span>Photo</span>
+            <input name="photo" type="file" accept="image/*" required />
+          </label>
+          <button class="button" type="submit" id="upload-btn">Upload</button>
+          <div id="upload-status" class="hint"></div>
+        </form>
+      </div>
+    </aside>
+  </main>
+</div>
+
+    <script src="/vendor_leaflet.js"></script>
+    <script src="/js/main.js"></script>
+  </body>
+</html>

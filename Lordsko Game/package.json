@@ -1,0 +1,11 @@
+{
+  "name": "lordsko-game",
+  "version": "1.0.0",
+  "description": "NYC photo map with CLI uploads",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "add:upload": "node scripts/add-upload.js"
+  },
+  "license": "MIT"
+}
