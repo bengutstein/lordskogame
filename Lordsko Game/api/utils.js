@@ -1,0 +1,134 @@
+const path = require('path');
+
+const mimeTypes = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.webp': 'image/webp',
+  '.heic': 'image/heic'
+};
+
+function mimeFromFilename(name) {
+  const ext = path.extname(name || '').toLowerCase();
+  return mimeTypes[ext] || 'application/octet-stream';
+}
+
+function isWithinNYC(lat, lng) {
+  // Rough NYC bounding box to avoid obviously wrong geocodes.
+  return lat >= 40.4774 && lat <= 40.9176 && lng >= -74.2591 && lng <= -73.7004;
+}
+
+function normalizeAddress(address) {
+  const trimmed = (address || '').trim();
+  const lower = trimmed.toLowerCase();
+  if (!trimmed) return '';
+  if (lower.includes('ny') || lower.includes('new york')) {
+    return trimmed;
+  }
+  return `${trimmed}, New York City, NY`;
+}
+
+async function geocodeAddress(address) {
+  const normalized = normalizeAddress(address);
+  if (!normalized) {
+    throw new Error('Missing address');
+  }
+  const encoded = encodeURIComponent(normalized);
+  const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encoded}`;
+  const res = await fetch(geoUrl, {
+    headers: { 'User-Agent': 'lordsko-game/1.0' }
+  });
+  if (!res.ok) throw new Error('Geocoding failed');
+  const data = await res.json();
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error('No results for that address');
+  }
+  const { lat, lon } = data[0];
+  const latNum = parseFloat(lat);
+  const lngNum = parseFloat(lon);
+  if (Number.isNaN(latNum) || Number.isNaN(lngNum)) {
+    throw new Error('Invalid geocode result');
+  }
+  if (!isWithinNYC(latNum, lngNum)) {
+    throw new Error('Address appears outside NYC');
+  }
+  return { lat: latNum, lng: lngNum, address: normalized };
+}
+
+async function readRequestBuffer(req) {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+function parseMultipart(buffer, boundary) {
+  const parts = buffer
+    .toString('binary')
+    .split(boundary)
+    .filter((p) => p.trim() && p.trim() !== '--');
+
+  const fields = {};
+  let fileContent = null;
+  let fileName = null;
+
+  parts.forEach((part) => {
+    const [rawHeaders, rawBody] = part.split('\r\n\r\n');
+    if (!rawBody) return;
+    const body = rawBody.replace(/\r\n$/, '');
+    const headerLines = rawHeaders.split('\r\n').filter(Boolean);
+    const dispoLine = headerLines.find((h) => h.toLowerCase().startsWith('content-disposition'));
+    if (!dispoLine) return;
+    const nameMatch = dispoLine.match(/name="([^"]+)"/);
+    if (!nameMatch) return;
+    const fieldName = nameMatch[1];
+    const filenameMatch = dispoLine.match(/filename="([^"]*)"/);
+
+    if (filenameMatch && filenameMatch[1]) {
+      fileName = filenameMatch[1] || 'upload.bin';
+      fileContent = Buffer.from(body, 'binary');
+    } else {
+      fields[fieldName] = body;
+    }
+  });
+
+  return { fields, fileName, fileContent };
+}
+
+async function loadUploadsFromBlob() {
+  const { list } = await import('@vercel/blob');
+  const { blobs } = await list({ prefix: 'data/uploads.json' });
+  const existing = blobs.find((b) => b.pathname === 'data/uploads.json');
+  if (!existing) return [];
+  const res = await fetch(existing.url);
+  if (!res.ok) {
+    throw new Error('Failed to read uploads data');
+  }
+  return res.json();
+}
+
+async function saveUploadsToBlob(uploads) {
+  const { put } = await import('@vercel/blob');
+  await put('data/uploads.json', JSON.stringify(uploads, null, 2), {
+    access: 'public',
+    contentType: 'application/json'
+  });
+}
+
+module.exports = {
+  geocodeAddress,
+  normalizeAddress,
+  readRequestBuffer,
+  parseMultipart,
+  mimeFromFilename,
+  loadUploadsFromBlob,
+  saveUploadsToBlob
+};

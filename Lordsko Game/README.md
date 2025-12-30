@@ -2,8 +2,15 @@
 
 Simple Node + Leaflet app that plots photo uploads on a NYC map and tracks Ben vs Jake.
 
+Uploads are now stored in Vercel Blob so they persist on Vercel deployments.
+
 ## Run the app
-1) From the project root:  
+For the production-like flow (uses the serverless functions and Blob):
+1) Install deps: `npm install`
+2) Set `BLOB_READ_WRITE_TOKEN` (from Vercel > Storage > Blob)
+3) Run `vercel dev` from the project root
+
+Legacy local-only flow (writes to disk, no Blob):
 `npm start`  
 This serves `public/` on http://localhost:3000
 
@@ -25,3 +32,9 @@ node scripts/add-upload.js --uploader Ben --lat 40.7128 --lng -74.0060 --photo /
 - Clicking a marker shows the photo and metadata.
 - Sidebar shows the leaderboard and up to three most recent uploads per person.
 - Use the "Refresh uploads" button to pull the latest JSON without restarting the server.
+
+## Deploying to Vercel with uploads
+- Create a Vercel Blob store and grab the `BLOB_READ_WRITE_TOKEN`.
+- Add that token to the project (Vercel dashboard > Settings > Environment Variables).
+- Deploy with `vercel --prod` (static assets come from `public/`, APIs live in `api/`).
+- The `/api/upload` function writes images to Blob storage and appends metadata to `data/uploads.json` in Blob. `/api/uploads` reads that JSON.
