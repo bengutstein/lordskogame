@@ -104,35 +104,46 @@ function parseMultipart(buffer, boundary) {
 }
 
 async function loadUploadsFromBlob() {
-  const { head } = await import('@vercel/blob');
-  try {
-    const { blob } = await head('data/uploads.json');
+  const { head, list } = await import('@vercel/blob');
+  const fetchBlob = async (blob) => {
     if (!blob || !blob.url) return [];
     const res = await fetch(blob.url);
     if (!res.ok) throw new Error('Failed to read uploads data');
     return res.json();
+  };
+
+  try {
+    const { blob } = await head('data/uploads.json');
+    if (blob) {
+      return fetchBlob(blob);
+    }
   } catch (err) {
-    // If the file does not exist yet, start fresh.
     const status = err && (err.status || err.statusCode);
     const message = err && err.message ? err.message.toLowerCase() : '';
-    if (
+    const notFound =
       err &&
       (err.code === 'not_found' ||
         status === 404 ||
         message.includes('not found') ||
-        message.includes('does not exist'))
-    ) {
-      return [];
+        message.includes('does not exist'));
+    if (!notFound) {
+      throw err;
     }
-    throw err;
   }
+
+  // Fallback: if the file had a random suffix from earlier writes, grab the latest.
+  const { blobs } = await list({ prefix: 'data/uploads.json' });
+  const latest = blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
+  if (!latest) return [];
+  return fetchBlob(latest);
 }
 
 async function saveUploadsToBlob(uploads) {
   const { put } = await import('@vercel/blob');
   await put('data/uploads.json', JSON.stringify(uploads, null, 2), {
     access: 'public',
-    contentType: 'application/json'
+    contentType: 'application/json',
+    addRandomSuffix: false
   });
 }
 
