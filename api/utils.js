@@ -113,7 +113,9 @@ async function loadUploadsFromBlob() {
     return res.json();
   } catch (err) {
     // If the file does not exist yet, start fresh.
-    if (err && err.code === 'not_found') {
+    const status = err && (err.status || err.statusCode);
+    const message = err && err.message ? err.message.toLowerCase() : '';
+    if (err && (err.code === 'not_found' || status === 404 || message.includes('not found'))) {
       return [];
     }
     throw err;
