@@ -74,7 +74,13 @@ module.exports = async function handler(req, res) {
       createdAt: new Date().toISOString()
     };
 
-    const uploads = await loadUploadsFromBlob();
+    let uploads = [];
+    try {
+      uploads = await loadUploadsFromBlob();
+    } catch (readErr) {
+      console.error('Uploads read failed, starting fresh', readErr);
+      uploads = [];
+    }
     uploads.push(entry);
     await saveUploadsToBlob(uploads);
     return sendJson(res, 200, entry);
