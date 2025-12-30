@@ -104,15 +104,20 @@ function parseMultipart(buffer, boundary) {
 }
 
 async function loadUploadsFromBlob() {
-  const { list } = await import('@vercel/blob');
-  const { blobs } = await list({ prefix: 'data/uploads.json' });
-  const existing = blobs.find((b) => b.pathname === 'data/uploads.json');
-  if (!existing) return [];
-  const res = await fetch(existing.url);
-  if (!res.ok) {
-    throw new Error('Failed to read uploads data');
+  const { head } = await import('@vercel/blob');
+  try {
+    const { blob } = await head('data/uploads.json');
+    if (!blob || !blob.url) return [];
+    const res = await fetch(blob.url);
+    if (!res.ok) throw new Error('Failed to read uploads data');
+    return res.json();
+  } catch (err) {
+    // If the file does not exist yet, start fresh.
+    if (err && err.code === 'not_found') {
+      return [];
+    }
+    throw err;
   }
-  return res.json();
 }
 
 async function saveUploadsToBlob(uploads) {
