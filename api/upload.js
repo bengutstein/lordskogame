@@ -17,6 +17,11 @@ module.exports = async function handler(req, res) {
     return sendJson(res, 405, { error: 'Method Not Allowed' });
   }
 
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error('Missing BLOB_READ_WRITE_TOKEN env var');
+    return sendJson(res, 500, { error: 'Server misconfigured: missing blob token' });
+  }
+
   const contentType = req.headers['content-type'] || '';
   const boundaryMatch = contentType.match(/boundary=(.+)$/);
   if (!boundaryMatch) {
@@ -57,11 +62,18 @@ module.exports = async function handler(req, res) {
     const destName = `${Date.now()}_${safeName}`;
     const mimeType = mimeFromFilename(fileName);
 
-    const { put } = await import('@vercel/blob');
-    const uploaded = await put(`uploads/${destName}`, fileContent, {
-      access: 'public',
-      contentType: mimeType
-    });
+    let uploaded;
+    try {
+      const { put } = await import('@vercel/blob');
+      uploaded = await put(`uploads/${destName}`, fileContent, {
+        access: 'public',
+        contentType: mimeType,
+        addRandomSuffix: false
+      });
+    } catch (putErr) {
+      console.error('Blob put failed', putErr);
+      return sendJson(res, 500, { error: 'Failed to store file', detail: putErr.message });
+    }
 
     const entry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -82,7 +94,12 @@ module.exports = async function handler(req, res) {
       uploads = [];
     }
     uploads.push(entry);
-    await saveUploadsToBlob(uploads);
+    try {
+      await saveUploadsToBlob(uploads);
+    } catch (writeErr) {
+      console.error('Uploads save failed', writeErr);
+      return sendJson(res, 500, { error: 'Failed to persist upload', detail: writeErr.message });
+    }
     return sendJson(res, 200, entry);
   } catch (err) {
     console.error('Upload failed', err);
