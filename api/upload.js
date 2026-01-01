@@ -17,6 +17,11 @@ module.exports = async function handler(req, res) {
     return sendJson(res, 405, { error: 'Method Not Allowed' });
   }
 
+  console.log('Upload request start', {
+    method: req.method,
+    contentType: req.headers['content-type'] || ''
+  });
+
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     console.error('Missing BLOB_READ_WRITE_TOKEN env var');
     return sendJson(res, 500, { error: 'Server misconfigured: missing blob token' });
@@ -70,6 +75,7 @@ module.exports = async function handler(req, res) {
         contentType: mimeType,
         addRandomSuffix: false
       });
+      console.log('Blob put success', { path: uploaded.pathname || uploaded.url });
     } catch (putErr) {
       console.error('Blob put failed', putErr);
       return sendJson(res, 500, { error: 'Failed to store file', detail: putErr.message });
@@ -96,10 +102,12 @@ module.exports = async function handler(req, res) {
     uploads.push(entry);
     try {
       await saveUploadsToBlob(uploads);
+      console.log('Uploads saved', { count: uploads.length });
     } catch (writeErr) {
       console.error('Uploads save failed', writeErr);
       return sendJson(res, 500, { error: 'Failed to persist upload', detail: writeErr.message });
     }
+    console.log('Upload request success', { id: entry.id });
     return sendJson(res, 200, entry);
   } catch (err) {
     console.error('Upload failed', err);
