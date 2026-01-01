@@ -53,9 +53,10 @@ function renderMarkers(uploads) {
   uploads.forEach((upload) => {
     const lower = (upload.uploader || '').toLowerCase();
     const pinClass = lower === 'ben' ? 'ben' : lower === 'jake' ? 'jake' : 'other';
+    const imgSrc = upload.imageProxy || upload.image;
     const icon = L.divIcon({
       className: 'photo-marker',
-      html: `<div class="photo-pin ${pinClass}"><img src="${upload.image}" alt="${upload.uploader || 'Upload'}" /></div>`,
+      html: `<div class="photo-pin ${pinClass}"><img src="${imgSrc}" alt="${upload.uploader || 'Upload'}" /></div>`,
       iconSize: [42, 42],
       iconAnchor: [21, 21],
       popupAnchor: [0, -16]

@@ -88,6 +88,7 @@ module.exports = async function handler(req, res) {
       lng,
       address: resolvedAddress || address || '',
       image: uploaded.url,
+      imageProxy: `/api/blob-image?url=${encodeURIComponent(uploaded.url)}`,
       originalPath: `(browser-uploaded) ${fileName || 'upload.bin'}`,
       createdAt: new Date().toISOString()
     };

@@ -38,3 +38,4 @@ node scripts/add-upload.js --uploader Ben --lat 40.7128 --lng -74.0060 --photo /
 - Add that token to the project (Vercel dashboard > Settings > Environment Variables).
 - Deploy with `vercel --prod` (static assets come from `public/`, APIs live in `api/`).
 - The `/api/upload` function writes images to Blob storage and appends metadata to `data/uploads.json` in Blob. `/api/uploads` reads that JSON.
+- Images now include a proxied URL (`imageProxy`) via `/api/blob-image` to ensure they load consistently; the frontend prefers that field when present.
