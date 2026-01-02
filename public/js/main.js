@@ -194,6 +194,15 @@ if (uploadForm) {
     uploadStatus.textContent = '';
 
     const formData = new FormData(uploadForm);
+    const fileInput = uploadForm.querySelector('input[name="photo"]');
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    const maxBytes = 4 * 1024 * 1024; // 4 MB safety limit for Vercel serverless.
+    if (file && file.size > maxBytes) {
+      uploadStatus.textContent = 'File too large (max 4MB). Choose a smaller image.';
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload';
+      return;
+    }
     try {
       const res = await fetch('/api/upload', {
         method: 'POST',
