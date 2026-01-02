@@ -1,3 +1,5 @@
+const { convertHeicToJpeg } = require('./utils');
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -26,8 +28,7 @@ module.exports = async function handler(req, res) {
     const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
     if (contentType.toLowerCase().includes('heic') || contentType.toLowerCase().includes('heif')) {
       try {
-        const sharp = require('sharp');
-        buffer = await sharp(buffer, { limitInputPixels: false }).jpeg({ quality: 85 }).toBuffer();
+        buffer = await convertHeicToJpeg(buffer);
         res.setHeader('Content-Type', 'image/jpeg');
       } catch (convertErr) {
         console.error('Blob proxy HEIC conversion failed', convertErr);

@@ -28,8 +28,18 @@ function isHeic(name, mimeType) {
 }
 
 async function convertHeicToJpeg(buffer) {
-  const sharp = require('sharp');
-  return sharp(buffer, { limitInputPixels: false }).jpeg({ quality: 85 }).toBuffer();
+  try {
+    const convert = require('heic-convert');
+    const out = await convert({
+      buffer,
+      format: 'JPEG',
+      quality: 0.85
+    });
+    return Buffer.from(out);
+  } catch (err) {
+    const sharp = require('sharp');
+    return sharp(buffer, { limitInputPixels: false }).jpeg({ quality: 85 }).toBuffer();
+  }
 }
 
 function isWithinNYC(lat, lng) {
