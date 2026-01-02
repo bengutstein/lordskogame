@@ -55,6 +55,11 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 400, { error: 'Missing uploader or file' });
     }
 
+    const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+    if (fileContent.length > MAX_BYTES) {
+      return sendJson(res, 413, { error: 'File too large (max 10MB)' });
+    }
+
     async function resolveLocation() {
       if (!Number.isNaN(latField) && !Number.isNaN(lngField)) {
         return { lat: latField, lng: lngField, address: address || '' };
