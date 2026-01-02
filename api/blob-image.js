@@ -21,9 +21,21 @@ module.exports = async function handler(req, res) {
       return res.status(upstream.status).json({ error: 'Blob fetch failed' });
     }
 
-    const buffer = Buffer.from(await upstream.arrayBuffer());
+    const arrayBuffer = await upstream.arrayBuffer();
+    let buffer = Buffer.from(arrayBuffer);
     const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
-    res.setHeader('Content-Type', contentType);
+    if (contentType.toLowerCase().includes('heic') || contentType.toLowerCase().includes('heif')) {
+      try {
+        const sharp = require('sharp');
+        buffer = await sharp(buffer, { limitInputPixels: false }).jpeg({ quality: 85 }).toBuffer();
+        res.setHeader('Content-Type', 'image/jpeg');
+      } catch (convertErr) {
+        console.error('Blob proxy HEIC conversion failed', convertErr);
+        res.setHeader('Content-Type', contentType);
+      }
+    } else {
+      res.setHeader('Content-Type', contentType);
+    }
     res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.status(200).send(buffer);
   } catch (err) {
