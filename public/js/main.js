@@ -117,7 +117,7 @@ function renderLeaderboard(uploads) {
 }
 
 function renderRecents(uploads) {
-  const sorted = [...uploads].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4);
+  const sorted = [...uploads].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
   recentList.innerHTML = '';
 
   if (!sorted.length) {
