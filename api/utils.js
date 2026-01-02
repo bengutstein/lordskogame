@@ -12,12 +12,24 @@ const mimeTypes = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.webp': 'image/webp',
-  '.heic': 'image/heic'
+  '.heic': 'image/heic',
+  '.heif': 'image/heif'
 };
 
 function mimeFromFilename(name) {
   const ext = path.extname(name || '').toLowerCase();
   return mimeTypes[ext] || 'application/octet-stream';
+}
+
+function isHeic(name, mimeType) {
+  const ext = (path.extname(name || '') || '').toLowerCase();
+  const lowerMime = (mimeType || '').toLowerCase();
+  return ext === '.heic' || ext === '.heif' || lowerMime.includes('heic') || lowerMime.includes('heif');
+}
+
+async function convertHeicToJpeg(buffer) {
+  const sharp = require('sharp');
+  return sharp(buffer, { limitInputPixels: false }).jpeg({ quality: 85 }).toBuffer();
 }
 
 function isWithinNYC(lat, lng) {
@@ -153,6 +165,8 @@ module.exports = {
   readRequestBuffer,
   parseMultipart,
   mimeFromFilename,
+  isHeic,
+  convertHeicToJpeg,
   loadUploadsFromBlob,
   saveUploadsToBlob
 };

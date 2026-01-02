@@ -3,6 +3,8 @@ const {
   readRequestBuffer,
   parseMultipart,
   mimeFromFilename,
+  isHeic,
+  convertHeicToJpeg,
   loadUploadsFromBlob,
   saveUploadsToBlob
 } = require('./utils');
@@ -69,13 +71,25 @@ module.exports = async function handler(req, res) {
 
     const { lat, lng, address: resolvedAddress } = await resolveLocation();
     const safeName = fileName ? fileName.replace(/\s+/g, '_') : 'upload.bin';
-    const destName = `${Date.now()}_${safeName}`;
-    const mimeType = mimeFromFilename(fileName);
+    let destName = `${Date.now()}_${safeName}`;
+    let mimeType = mimeFromFilename(fileName);
+    let uploadBuffer = fileContent;
+
+    if (isHeic(fileName, mimeType)) {
+      try {
+        uploadBuffer = await convertHeicToJpeg(fileContent);
+        mimeType = 'image/jpeg';
+        destName = destName.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg');
+      } catch (convertErr) {
+        console.error('HEIC conversion failed', convertErr);
+        return sendJson(res, 415, { error: 'Could not convert HEIC image' });
+      }
+    }
 
     let uploaded;
     try {
       const { put } = await import('@vercel/blob');
-      uploaded = await put(`uploads/${destName}`, fileContent, {
+      uploaded = await put(`uploads/${destName}`, uploadBuffer, {
         access: 'public',
         contentType: mimeType,
         addRandomSuffix: false
