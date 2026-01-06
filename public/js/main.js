@@ -52,7 +52,7 @@ function renderMarkers(uploads) {
 
   uploads.forEach((upload) => {
     const lower = (upload.uploader || '').toLowerCase();
-    const pinClass = lower === 'ben' ? 'ben' : lower === 'jake' ? 'jake' : 'other';
+    const pinClass = lower === 'ben' ? 'ben' : lower === 'jake' ? 'jake' : lower === 'jeremy' ? 'jeremy' : 'other';
     const imgSrc = upload.imageProxy || upload.image;
     const icon = L.divIcon({
       className: 'photo-marker',
@@ -96,7 +96,7 @@ function renderLeaderboard(uploads) {
     row.className = 'stat';
     const badge = document.createElement('span');
     const lowered = group.name.toLowerCase();
-    badge.className = `badge ${lowered === 'ben' ? 'ben' : lowered === 'jake' ? 'jake' : 'other'}`;
+    badge.className = `badge ${lowered === 'ben' ? 'ben' : lowered === 'jake' ? 'jake' : lowered === 'jeremy' ? 'jeremy' : 'other'}`;
     badge.textContent = group.name;
 
     const count = document.createElement('span');
@@ -136,7 +136,7 @@ function renderRecents(uploads) {
 
     const badge = document.createElement('span');
     const lowered = (upload.uploader || '').toLowerCase();
-    badge.className = `badge ${lowered === 'ben' ? 'ben' : lowered === 'jake' ? 'jake' : 'other'}`;
+    badge.className = `badge ${lowered === 'ben' ? 'ben' : lowered === 'jake' ? 'jake' : lowered === 'jeremy' ? 'jeremy' : 'other'}`;
     badge.textContent = upload.uploader || 'Unknown';
 
     const time = document.createElement('span');

@@ -70,6 +70,23 @@ module.exports = async function handler(req, res) {
     }
 
     const { lat, lng, address: resolvedAddress } = await resolveLocation();
+    const targetAddress = (resolvedAddress || address || '').trim().toLowerCase();
+
+    let uploads = [];
+    try {
+      uploads = await loadUploadsFromBlob();
+    } catch (readErr) {
+      console.error('Uploads read failed, starting fresh', readErr);
+      uploads = [];
+    }
+
+    if (
+      targetAddress &&
+      uploads.some((u) => ((u.address || '').trim().toLowerCase() === targetAddress))
+    ) {
+      return sendJson(res, 400, { error: 'Cannot reuse address' });
+    }
+
     const safeName = fileName ? fileName.replace(/\s+/g, '_') : 'upload.bin';
     let destName = `${Date.now()}_${safeName}`;
     let mimeType = mimeFromFilename(fileName);
@@ -112,13 +129,6 @@ module.exports = async function handler(req, res) {
       createdAt: new Date().toISOString()
     };
 
-    let uploads = [];
-    try {
-      uploads = await loadUploadsFromBlob();
-    } catch (readErr) {
-      console.error('Uploads read failed, starting fresh', readErr);
-      uploads = [];
-    }
     uploads.push(entry);
     try {
       await saveUploadsToBlob(uploads);
